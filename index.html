@@ -30,7 +30,7 @@
 
     <!-- Player -->
     <section id="player-screen" class="screen hidden">
-      <header class="header">
+      <header class="header player-chrome">
         <button class="back-btn focusable" data-action="back" tabindex="0" aria-label="Back">←</button>
         <h1 id="now-playing-title">Now Playing</h1>
       </header>
@@ -39,14 +39,21 @@
         <div id="player"></div>
       </div>
 
-      <nav class="nav-bar nav-bar-split">
+      <nav class="nav-bar nav-bar-split player-chrome">
         <button class="nav-item focusable" data-action="toggle-play" tabindex="0" id="play-btn">
           ⏸ Pause
         </button>
-        <button class="nav-item focusable" data-action="next-video" tabindex="0">
+        <button class="nav-item focusable" data-action="next-video" tabindex="0" id="next-btn">
           ⏭ Next
         </button>
+        <button class="nav-item focusable" data-action="toggle-fullscreen" tabindex="0" id="fullscreen-btn">
+          ⛶ Fullscreen
+        </button>
       </nav>
+
+      <button class="fullscreen-exit focusable hidden" data-action="exit-fullscreen" tabindex="0" aria-label="Exit fullscreen">
+        ← Exit
+      </button>
     </section>
 
   </div>

@@ -11,6 +11,7 @@
   };
 
   var VIDEOS = [
+    { id: '_TJFqEhxQg4', title: 'Bill Ackman: Investment Strategy', channel: 'All-In Podcast' },
     { id: 'dQw4w9WgXcQ', title: 'Never Gonna Give You Up', channel: 'Rick Astley' },
     { id: 'jNQXAC9IVRw', title: 'Me at the zoo', channel: 'jawed' },
     { id: 'YE7VzlLtp-4', title: 'Big Buck Bunny', channel: 'Blender Foundation' },
@@ -20,6 +21,8 @@
   ];
 
   var STORAGE_KEY = 'youtube_last_index';
+  var PLAYER_NORMAL = { w: 560, h: 315 };
+  var PLAYER_FULL = { w: 600, h: 600 };
 
   var browseScreen = document.getElementById('browse');
   var playerScreen = document.getElementById('player-screen');
@@ -27,6 +30,10 @@
   var videoCountEl = document.getElementById('video-count');
   var nowPlayingTitle = document.getElementById('now-playing-title');
   var playBtn = document.getElementById('play-btn');
+  var nextBtn = document.getElementById('next-btn');
+  var fullscreenBtn = document.getElementById('fullscreen-btn');
+  var fullscreenExitBtn = document.querySelector('[data-action="exit-fullscreen"]');
+  var playerEl = document.getElementById('player');
 
   var selectedIndex = 0;
   var currentIndex = 0;
@@ -34,6 +41,8 @@
   var apiReady = false;
   var apiLoading = false;
   var playerMode = false;
+  var isFullscreen = false;
+  var lastFocusedControl = null;
 
   function loadLastIndex() {
     var saved = localStorage.getItem(STORAGE_KEY);
@@ -48,6 +57,25 @@
 
   function thumbUrl(videoId) {
     return 'https://img.youtube.com/vi/' + videoId + '/mqdefault.jpg';
+  }
+
+  function rememberFocus(el) {
+    if (el && el.classList && el.classList.contains('focusable')) {
+      lastFocusedControl = el;
+    }
+  }
+
+  function restoreFocus() {
+    if (
+      lastFocusedControl &&
+      document.contains(lastFocusedControl) &&
+      lastFocusedControl.offsetParent !== null
+    ) {
+      lastFocusedControl.focus();
+      return;
+    }
+    var focusables = getVisibleFocusables();
+    if (focusables.length) focusables[0].focus();
   }
 
   function renderVideoList() {
@@ -86,6 +114,7 @@
     browseScreen.classList.toggle('hidden', name !== 'browse');
     playerScreen.classList.toggle('hidden', name !== 'player');
     playerMode = name === 'player';
+    if (name !== 'player') setFullscreen(false);
   }
 
   function focusFirstVisible() {
@@ -124,7 +153,36 @@
       player.destroy();
     }
     player = null;
-    document.getElementById('player').innerHTML = '';
+    playerEl.innerHTML = '';
+  }
+
+  function playerSize() {
+    return isFullscreen ? PLAYER_FULL : PLAYER_NORMAL;
+  }
+
+  function resizePlayer() {
+    if (!player || !player.setSize) return;
+    var size = playerSize();
+    player.setSize(size.w, size.h);
+  }
+
+  function setFullscreen(on) {
+    isFullscreen = on;
+    playerScreen.classList.toggle('fullscreen', on);
+    fullscreenExitBtn.classList.toggle('hidden', !on);
+    fullscreenBtn.textContent = on ? '⛶ Exit Fullscreen' : '⛶ Fullscreen';
+    resizePlayer();
+    if (on) {
+      rememberFocus(fullscreenExitBtn);
+      fullscreenExitBtn.focus();
+    } else {
+      rememberFocus(fullscreenBtn);
+      restoreFocus();
+    }
+  }
+
+  function toggleFullscreen() {
+    setFullscreen(!isFullscreen);
   }
 
   function createPlayer(index) {
@@ -134,10 +192,13 @@
     saveLastIndex(index);
     destroyPlayer();
 
+    var size = playerSize();
+
     player = new YT.Player('player', {
-      width: '560',
-      height: '315',
+      width: String(size.w),
+      height: String(size.h),
       videoId: video.id,
+      host: 'https://www.youtube-nocookie.com',
       playerVars: {
         autoplay: 1,
         controls: 0,
@@ -145,11 +206,15 @@
         rel: 0,
         playsinline: 1,
         fs: 0,
-        iv_load_policy: 3
+        iv_load_policy: 3,
+        cc_load_policy: 0,
+        disablekb: 1,
+        enablejsapi: 1,
+        origin: window.location.origin
       },
       events: {
         onReady: function () {
-          playBtn.focus();
+          restoreFocus();
         },
         onStateChange: onPlayerStateChange
       }
@@ -167,18 +232,22 @@
     }
   }
 
-  function openPlayer(index) {
+  function openPlayer(index, triggerEl) {
+    rememberFocus(triggerEl || document.activeElement);
     selectedIndex = index;
     updateSelection(index);
     showScreen('player');
 
     loadYouTubeAPI(function () {
       createPlayer(index);
-      playBtn.focus();
     });
   }
 
   function goBack() {
+    if (isFullscreen) {
+      setFullscreen(false);
+      return;
+    }
     destroyPlayer();
     showScreen('browse');
     var items = videoListEl.querySelectorAll('.video-item');
@@ -196,15 +265,15 @@
   }
 
   function playNext() {
+    rememberFocus(nextBtn);
     var next = (currentIndex + 1) % VIDEOS.length;
     createPlayer(next);
-    document.querySelector('[data-action="next-video"]').focus();
   }
 
   function getVisibleFocusables() {
     var screen = playerMode ? playerScreen : browseScreen;
     return Array.from(
-      screen.querySelectorAll('.focusable:not([disabled])')
+      screen.querySelectorAll('.focusable:not([disabled]):not(.hidden)')
     ).filter(function (el) {
       return el.offsetParent !== null;
     });
@@ -215,7 +284,7 @@
     var active = document.activeElement;
     var focusables = getVisibleFocusables();
     if (focusables.indexOf(active) === -1) {
-      playBtn.focus();
+      restoreFocus();
     }
   }
 
@@ -225,7 +294,7 @@
 
     var idx = focusables.indexOf(document.activeElement);
     if (idx === -1) {
-      focusables[0].focus();
+      restoreFocus();
       return;
     }
 
@@ -237,17 +306,20 @@
     }
 
     focusables[next].focus();
+    rememberFocus(focusables[next]);
   }
 
   document.addEventListener('click', function (e) {
     var target = e.target.closest('[data-action]');
     if (!target) return;
 
+    rememberFocus(target);
+
     switch (target.dataset.action) {
       case 'select-video': {
         var idx = parseInt(target.dataset.index, 10);
         if (idx === selectedIndex) {
-          openPlayer(idx);
+          openPlayer(idx, target);
         } else {
           updateSelection(idx);
           target.focus();
@@ -255,7 +327,7 @@
         break;
       }
       case 'play-selected':
-        openPlayer(selectedIndex);
+        openPlayer(selectedIndex, target);
         break;
       case 'back':
         goBack();
@@ -265,6 +337,12 @@
         break;
       case 'next-video':
         playNext();
+        break;
+      case 'toggle-fullscreen':
+        toggleFullscreen();
+        break;
+      case 'exit-fullscreen':
+        setFullscreen(false);
         break;
     }
   });
@@ -301,6 +379,9 @@
   });
 
   document.addEventListener('focusin', function (e) {
+    if (e.target.classList && e.target.classList.contains('focusable')) {
+      rememberFocus(e.target);
+    }
     if (!playerMode) return;
     if (e.target.closest('#player') || e.target.tagName === 'IFRAME') {
       keepFocusOnControls();
