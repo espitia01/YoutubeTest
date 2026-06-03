@@ -10,6 +10,16 @@
     BACK: 'Escape'
   };
 
+  var ICON = {
+    play: '\u25B6',
+    pause: '\u23F8',
+    next: '\u23ED',
+    full: '\u26F6',
+    shrink: '\u26F6',
+    back: '\u2190',
+    exit: '\u2715'
+  };
+
   var VIDEOS = [
     { id: '_TJFqEhxQg4', title: 'Bill Ackman: Investment Strategy', channel: 'All-In Podcast' },
     { id: 'dQw4w9WgXcQ', title: 'Never Gonna Give You Up', channel: 'Rick Astley' },
@@ -21,10 +31,11 @@
   ];
 
   var STORAGE_KEY = 'youtube_last_index';
+  var PROGRESS_KEY = 'youtube_progress';
   var PLAYER_VIEW = { w: 552, h: 311 };
   var PLAYER_FULL_VIEW = { w: 600, h: 600 };
-  // YouTube picks stream quality from iframe size; 1280px width unlocks up to 720p.
   var PLAYER_HD = { w: 1280, h: 720 };
+  var PROGRESS_SAVE_MS = 5000;
 
   var browseScreen = document.getElementById('browse');
   var playerScreen = document.getElementById('player-screen');
@@ -35,6 +46,7 @@
   var nextBtn = document.getElementById('next-btn');
   var fullscreenBtn = document.getElementById('fullscreen-btn');
   var fullscreenExitBtn = document.querySelector('[data-action="exit-fullscreen"]');
+  var fullscreenSurface = document.getElementById('fullscreen-surface');
   var playerEl = document.getElementById('player');
 
   var selectedIndex = 0;
@@ -44,7 +56,9 @@
   var apiLoading = false;
   var playerMode = false;
   var isFullscreen = false;
+  var fullscreenControlsVisible = false;
   var lastFocusedControl = null;
+  var progressTimer = null;
 
   function loadLastIndex() {
     try {
@@ -61,6 +75,63 @@
     try {
       localStorage.setItem(STORAGE_KEY, String(index));
     } catch (e) {}
+  }
+
+  function loadProgressMap() {
+    try {
+      return JSON.parse(localStorage.getItem(PROGRESS_KEY)) || {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function getVideoProgress(videoId) {
+    var entry = loadProgressMap()[videoId];
+    if (!entry || typeof entry.t !== 'number') return null;
+    return entry;
+  }
+
+  function saveVideoProgress(videoId, seconds, duration) {
+    if (!videoId || seconds < 1) return;
+    try {
+      var map = loadProgressMap();
+      var dur = duration || (map[videoId] && map[videoId].d) || 0;
+      if (dur > 0 && seconds >= dur - 5) {
+        delete map[videoId];
+      } else {
+        map[videoId] = { t: Math.floor(seconds), d: dur || Math.floor(seconds) };
+      }
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify(map));
+    } catch (e) {}
+  }
+
+  function saveCurrentProgress() {
+    if (!player || !player.getCurrentTime) return;
+    var video = VIDEOS[currentIndex];
+    if (!video) return;
+    saveVideoProgress(video.id, player.getCurrentTime(), player.getDuration());
+  }
+
+  function startProgressTimer() {
+    stopProgressTimer();
+    progressTimer = setInterval(saveCurrentProgress, PROGRESS_SAVE_MS);
+  }
+
+  function stopProgressTimer() {
+    if (progressTimer) {
+      clearInterval(progressTimer);
+      progressTimer = null;
+    }
+  }
+
+  function progressPercent(videoId) {
+    var entry = getVideoProgress(videoId);
+    if (!entry || !entry.d || entry.d <= 0) return 0;
+    return Math.min(100, Math.round((entry.t / entry.d) * 100));
+  }
+
+  function thumbUrl(videoId) {
+    return 'https://img.youtube.com/vi/' + videoId + '/mqdefault.jpg';
   }
 
   function rememberFocus(el) {
@@ -87,6 +158,7 @@
     videoCountEl.textContent = String(VIDEOS.length).padStart(2, '0') + ' titles';
 
     VIDEOS.forEach(function (video, index) {
+      var pct = progressPercent(video.id);
       var btn = document.createElement('button');
       btn.className = 'video-item focusable' + (index === selectedIndex ? ' selected' : '');
       btn.type = 'button';
@@ -97,10 +169,15 @@
 
       btn.innerHTML =
         '<span class="video-index">' + String(index + 1).padStart(2, '0') + '</span>' +
-        '<span class="video-thumb" aria-hidden="true"></span>' +
+        '<span class="video-thumb-wrap">' +
+          '<img class="video-thumb" src="' + thumbUrl(video.id) + '" alt="" loading="lazy">' +
+          (pct > 0 ? '<span class="video-progress" style="width:' + pct + '%"></span>' : '') +
+        '</span>' +
         '<div class="video-info">' +
           '<div class="video-title">' + video.title + '</div>' +
-          '<div class="video-channel">' + video.channel + '</div>' +
+          '<div class="video-channel">' + video.channel +
+            (pct > 0 ? ' <span class="video-pct">' + pct + '%</span>' : '') +
+          '</div>' +
         '</div>';
 
       videoListEl.appendChild(btn);
@@ -154,6 +231,8 @@
   }
 
   function destroyPlayer() {
+    saveCurrentProgress();
+    stopProgressTimer();
     if (player && player.destroy) {
       player.destroy();
     }
@@ -178,17 +257,39 @@
     playerEl.style.setProperty('--embed-scale', String(scale));
   }
 
+  function showFullscreenControls() {
+    fullscreenControlsVisible = true;
+    playerScreen.classList.add('controls-visible');
+    fullscreenExitBtn.classList.remove('hidden');
+    if (fullscreenSurface) fullscreenSurface.classList.add('hidden');
+    rememberFocus(fullscreenExitBtn);
+    fullscreenExitBtn.focus();
+  }
+
+  function hideFullscreenControls() {
+    fullscreenControlsVisible = false;
+    playerScreen.classList.remove('controls-visible');
+    fullscreenExitBtn.classList.add('hidden');
+    if (fullscreenSurface) {
+      fullscreenSurface.classList.remove('hidden');
+      fullscreenSurface.focus();
+    }
+  }
+
   function setFullscreen(on) {
     isFullscreen = on;
     playerScreen.classList.toggle('fullscreen', on);
-    fullscreenExitBtn.classList.toggle('hidden', !on);
-    fullscreenBtn.textContent = on ? 'Exit' : 'Full';
+    fullscreenBtn.textContent = ICON.shrink;
     playerEl.classList.toggle('embed-full', on);
     resizePlayer();
+
     if (on) {
-      rememberFocus(fullscreenExitBtn);
-      fullscreenExitBtn.focus();
+      hideFullscreenControls();
     } else {
+      fullscreenControlsVisible = false;
+      playerScreen.classList.remove('controls-visible');
+      fullscreenExitBtn.classList.add('hidden');
+      if (fullscreenSurface) fullscreenSurface.classList.add('hidden');
       rememberFocus(fullscreenBtn);
       restoreFocus();
     }
@@ -201,6 +302,7 @@
   function createPlayer(index) {
     currentIndex = index;
     var video = VIDEOS[index];
+    var saved = getVideoProgress(video.id);
     nowPlayingTitle.textContent = video.title;
     saveLastIndex(index);
     destroyPlayer();
@@ -224,10 +326,14 @@
         cc_load_policy: 0,
         disablekb: 1,
         enablejsapi: 1,
+        start: saved && saved.t > 0 ? saved.t : 0,
         origin: window.location.origin
       },
       events: {
-        onReady: function () {
+        onReady: function (event) {
+          if (saved && saved.t > 0) {
+            event.target.seekTo(saved.t, true);
+          }
           restoreFocus();
         },
         onStateChange: onPlayerStateChange
@@ -237,12 +343,18 @@
 
   function onPlayerStateChange(event) {
     if (event.data === YT.PlayerState.PLAYING) {
-      playBtn.textContent = 'Pause';
+      playBtn.textContent = ICON.pause;
+      startProgressTimer();
     } else if (
       event.data === YT.PlayerState.PAUSED ||
       event.data === YT.PlayerState.ENDED
     ) {
-      playBtn.textContent = 'Play';
+      playBtn.textContent = ICON.play;
+      stopProgressTimer();
+      saveCurrentProgress();
+      if (event.data === YT.PlayerState.ENDED) {
+        saveVideoProgress(VIDEOS[currentIndex].id, 0, player.getDuration());
+      }
     }
   }
 
@@ -259,10 +371,15 @@
 
   function goBack() {
     if (isFullscreen) {
+      if (fullscreenControlsVisible) {
+        hideFullscreenControls();
+        return;
+      }
       setFullscreen(false);
       return;
     }
     destroyPlayer();
+    renderVideoList();
     showScreen('browse');
     var items = videoListEl.querySelectorAll('.video-item');
     if (items[selectedIndex]) items[selectedIndex].focus();
@@ -295,6 +412,10 @@
 
   function keepFocusOnControls() {
     if (!playerMode) return;
+    if (isFullscreen && !fullscreenControlsVisible) {
+      if (fullscreenSurface) fullscreenSurface.focus();
+      return;
+    }
     var active = document.activeElement;
     var focusables = getVisibleFocusables();
     if (focusables.indexOf(active) === -1) {
@@ -303,6 +424,8 @@
   }
 
   function moveFocus(direction) {
+    if (isFullscreen && !fullscreenControlsVisible) return;
+
     var focusables = getVisibleFocusables();
     if (!focusables.length) return;
 
@@ -358,10 +481,19 @@
       case 'exit-fullscreen':
         setFullscreen(false);
         break;
+      case 'fullscreen-surface':
+        showFullscreenControls();
+        break;
     }
   });
 
   document.addEventListener('keydown', function (e) {
+    if (isFullscreen && !fullscreenControlsVisible && e.key === DPAD.SELECT) {
+      showFullscreenControls();
+      e.preventDefault();
+      return;
+    }
+
     switch (e.key) {
       case DPAD.UP:
         moveFocus('up');
@@ -401,6 +533,10 @@
       keepFocusOnControls();
     }
   });
+
+  playBtn.textContent = ICON.pause;
+  nextBtn.textContent = ICON.next;
+  fullscreenBtn.textContent = ICON.full;
 
   selectedIndex = loadLastIndex();
   try {

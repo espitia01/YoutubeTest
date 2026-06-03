@@ -19,84 +19,28 @@
         <span class="header-meta" id="video-count">07 titles</span>
       </header>
 
-      <div class="content" id="video-list" role="list">
-        <button class="video-item focusable selected" type="button" role="listitem" data-index="0" data-action="select-video" tabindex="0">
-          <span class="video-index">01</span>
-          <span class="video-thumb" aria-hidden="true"></span>
-          <div class="video-info">
-            <div class="video-title">Bill Ackman: Investment Strategy</div>
-            <div class="video-channel">All-In Podcast</div>
-          </div>
-        </button>
-        <button class="video-item focusable" type="button" role="listitem" data-index="1" data-action="select-video" tabindex="0">
-          <span class="video-index">02</span>
-          <span class="video-thumb" aria-hidden="true"></span>
-          <div class="video-info">
-            <div class="video-title">Never Gonna Give You Up</div>
-            <div class="video-channel">Rick Astley</div>
-          </div>
-        </button>
-        <button class="video-item focusable" type="button" role="listitem" data-index="2" data-action="select-video" tabindex="0">
-          <span class="video-index">03</span>
-          <span class="video-thumb" aria-hidden="true"></span>
-          <div class="video-info">
-            <div class="video-title">Me at the zoo</div>
-            <div class="video-channel">jawed</div>
-          </div>
-        </button>
-        <button class="video-item focusable" type="button" role="listitem" data-index="3" data-action="select-video" tabindex="0">
-          <span class="video-index">04</span>
-          <span class="video-thumb" aria-hidden="true"></span>
-          <div class="video-info">
-            <div class="video-title">Big Buck Bunny</div>
-            <div class="video-channel">Blender Foundation</div>
-          </div>
-        </button>
-        <button class="video-item focusable" type="button" role="listitem" data-index="4" data-action="select-video" tabindex="0">
-          <span class="video-index">05</span>
-          <span class="video-thumb" aria-hidden="true"></span>
-          <div class="video-info">
-            <div class="video-title">Sintel</div>
-            <div class="video-channel">Blender Foundation</div>
-          </div>
-        </button>
-        <button class="video-item focusable" type="button" role="listitem" data-index="5" data-action="select-video" tabindex="0">
-          <span class="video-index">06</span>
-          <span class="video-thumb" aria-hidden="true"></span>
-          <div class="video-info">
-            <div class="video-title">Keyboard Cat</div>
-            <div class="video-channel">Keyboard Cat</div>
-          </div>
-        </button>
-        <button class="video-item focusable" type="button" role="listitem" data-index="6" data-action="select-video" tabindex="0">
-          <span class="video-index">07</span>
-          <span class="video-thumb" aria-hidden="true"></span>
-          <div class="video-info">
-            <div class="video-title">Gangnam Style</div>
-            <div class="video-channel">PSY</div>
-          </div>
-        </button>
-      </div>
+      <div class="content" id="video-list" role="list"></div>
 
       <nav class="nav-bar">
-        <button class="nav-item primary focusable" data-action="play-selected" tabindex="0">Play</button>
+        <button class="nav-item primary focusable symbol" data-action="play-selected" tabindex="0" aria-label="Play">&#9654;</button>
       </nav>
     </section>
 
     <section id="player-screen" class="screen hidden">
       <header class="header player-chrome">
-        <button class="back-btn focusable" data-action="back" tabindex="0" aria-label="Back">←</button>
+        <button class="back-btn focusable symbol" data-action="back" tabindex="0" aria-label="Back">&#8592;</button>
         <h1 id="now-playing-title">Now Playing</h1>
       </header>
       <div class="player-wrap">
         <div id="player"></div>
       </div>
       <nav class="nav-bar nav-bar-split player-chrome">
-        <button class="nav-item focusable" data-action="toggle-play" tabindex="0" id="play-btn">Pause</button>
-        <button class="nav-item focusable" data-action="next-video" tabindex="0" id="next-btn">Next</button>
-        <button class="nav-item focusable" data-action="toggle-fullscreen" tabindex="0" id="fullscreen-btn">Full</button>
+        <button class="nav-item focusable symbol" data-action="toggle-play" tabindex="0" id="play-btn" aria-label="Pause">&#9208;</button>
+        <button class="nav-item focusable symbol" data-action="next-video" tabindex="0" id="next-btn" aria-label="Next">&#9197;</button>
+        <button class="nav-item focusable symbol" data-action="toggle-fullscreen" tabindex="0" id="fullscreen-btn" aria-label="Fullscreen">&#9974;</button>
       </nav>
-      <button class="fullscreen-exit focusable hidden" data-action="exit-fullscreen" tabindex="0" aria-label="Exit fullscreen">Exit</button>
+      <button class="fullscreen-surface focusable hidden" id="fullscreen-surface" data-action="fullscreen-surface" tabindex="0" aria-label="Show controls"></button>
+      <button class="fullscreen-exit focusable symbol hidden" data-action="exit-fullscreen" tabindex="0" aria-label="Exit fullscreen">&#10005;</button>
     </section>
 
   </div>
