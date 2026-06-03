@@ -47,14 +47,20 @@
   var lastFocusedControl = null;
 
   function loadLastIndex() {
-    var saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === null) return 0;
-    var idx = parseInt(saved, 10);
-    return idx >= 0 && idx < VIDEOS.length ? idx : 0;
+    try {
+      var saved = localStorage.getItem(STORAGE_KEY);
+      if (saved === null) return 0;
+      var idx = parseInt(saved, 10);
+      return idx >= 0 && idx < VIDEOS.length ? idx : 0;
+    } catch (e) {
+      return 0;
+    }
   }
 
   function saveLastIndex(index) {
-    localStorage.setItem(STORAGE_KEY, String(index));
+    try {
+      localStorage.setItem(STORAGE_KEY, String(index));
+    } catch (e) {}
   }
 
   function rememberFocus(el) {
@@ -397,7 +403,11 @@
   });
 
   selectedIndex = loadLastIndex();
-  renderVideoList();
-  showScreen('browse');
-  focusFirstVisible();
+  try {
+    renderVideoList();
+    showScreen('browse');
+    focusFirstVisible();
+  } catch (e) {
+    updateSelection(selectedIndex);
+  }
 })();
