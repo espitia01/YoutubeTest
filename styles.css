@@ -173,15 +173,10 @@ body {
   width: 68px;
   height: 38px;
   border-radius: 2px;
-  object-fit: cover;
   flex-shrink: 0;
-  background: var(--surface);
-  opacity: 0.88;
-}
-
-.video-item.selected .video-thumb,
-.video-item:focus .video-thumb {
-  opacity: 1;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border);
+  display: block;
 }
 
 .video-info {

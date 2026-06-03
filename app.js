@@ -57,10 +57,6 @@
     localStorage.setItem(STORAGE_KEY, String(index));
   }
 
-  function thumbUrl(videoId) {
-    return 'https://img.youtube.com/vi/' + videoId + '/mqdefault.jpg';
-  }
-
   function rememberFocus(el) {
     if (el && el.classList && el.classList.contains('focusable')) {
       lastFocusedControl = el;
@@ -95,7 +91,7 @@
 
       btn.innerHTML =
         '<span class="video-index">' + String(index + 1).padStart(2, '0') + '</span>' +
-        '<img class="video-thumb" src="' + thumbUrl(video.id) + '" alt="" loading="lazy">' +
+        '<span class="video-thumb" aria-hidden="true"></span>' +
         '<div class="video-info">' +
           '<div class="video-title">' + video.title + '</div>' +
           '<div class="video-channel">' + video.channel + '</div>' +
