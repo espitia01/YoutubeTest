@@ -148,6 +148,9 @@
         iv_load_policy: 3
       },
       events: {
+        onReady: function () {
+          playBtn.focus();
+        },
         onStateChange: onPlayerStateChange
       }
     });
@@ -195,14 +198,25 @@
   function playNext() {
     var next = (currentIndex + 1) % VIDEOS.length;
     createPlayer(next);
+    document.querySelector('[data-action="next-video"]').focus();
   }
 
   function getVisibleFocusables() {
+    var screen = playerMode ? playerScreen : browseScreen;
     return Array.from(
-      document.querySelectorAll('.focusable:not([disabled]):not(.hidden *)')
+      screen.querySelectorAll('.focusable:not([disabled])')
     ).filter(function (el) {
       return el.offsetParent !== null;
     });
+  }
+
+  function keepFocusOnControls() {
+    if (!playerMode) return;
+    var active = document.activeElement;
+    var focusables = getVisibleFocusables();
+    if (focusables.indexOf(active) === -1) {
+      playBtn.focus();
+    }
   }
 
   function moveFocus(direction) {
@@ -266,26 +280,11 @@
         e.preventDefault();
         break;
       case DPAD.LEFT:
-        if (playerMode) {
-          if (player && player.seekTo) {
-            var pos = player.getCurrentTime();
-            player.seekTo(Math.max(0, pos - 10), true);
-          }
-        } else {
-          moveFocus('left');
-        }
+        moveFocus('left');
         e.preventDefault();
         break;
       case DPAD.RIGHT:
-        if (playerMode) {
-          if (player && player.seekTo) {
-            var current = player.getCurrentTime();
-            var duration = player.getDuration();
-            player.seekTo(Math.min(duration, current + 10), true);
-          }
-        } else {
-          moveFocus('right');
-        }
+        moveFocus('right');
         e.preventDefault();
         break;
       case DPAD.SELECT:
@@ -298,6 +297,13 @@
         if (playerMode) goBack();
         e.preventDefault();
         break;
+    }
+  });
+
+  document.addEventListener('focusin', function (e) {
+    if (!playerMode) return;
+    if (e.target.closest('#player') || e.target.tagName === 'IFRAME') {
+      keepFocusOnControls();
     }
   });
 
