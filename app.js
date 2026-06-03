@@ -21,8 +21,10 @@
   ];
 
   var STORAGE_KEY = 'youtube_last_index';
-  var PLAYER_NORMAL = { w: 560, h: 315 };
-  var PLAYER_FULL = { w: 600, h: 600 };
+  var PLAYER_VIEW = { w: 560, h: 315 };
+  var PLAYER_FULL_VIEW = { w: 600, h: 600 };
+  // YouTube picks stream quality from iframe size; 1280px width unlocks up to 720p.
+  var PLAYER_HD = { w: 1280, h: 720 };
 
   var browseScreen = document.getElementById('browse');
   var playerScreen = document.getElementById('player-screen');
@@ -156,14 +158,21 @@
     playerEl.innerHTML = '';
   }
 
-  function playerSize() {
-    return isFullscreen ? PLAYER_FULL : PLAYER_NORMAL;
+  function playerViewSize() {
+    return isFullscreen ? PLAYER_FULL_VIEW : PLAYER_VIEW;
   }
 
   function resizePlayer() {
     if (!player || !player.setSize) return;
-    var size = playerSize();
-    player.setSize(size.w, size.h);
+    player.setSize(PLAYER_HD.w, PLAYER_HD.h);
+    updatePlayerScale();
+  }
+
+  function updatePlayerScale() {
+    var view = playerViewSize();
+    var brandScale = isFullscreen ? 1.22 : 1.18;
+    var scale = (view.w / PLAYER_HD.w) * brandScale;
+    playerEl.style.setProperty('--embed-scale', String(scale));
   }
 
   function setFullscreen(on) {
@@ -171,6 +180,7 @@
     playerScreen.classList.toggle('fullscreen', on);
     fullscreenExitBtn.classList.toggle('hidden', !on);
     fullscreenBtn.textContent = on ? '⛶ Exit Fullscreen' : '⛶ Fullscreen';
+    playerEl.classList.toggle('embed-full', on);
     resizePlayer();
     if (on) {
       rememberFocus(fullscreenExitBtn);
@@ -192,11 +202,12 @@
     saveLastIndex(index);
     destroyPlayer();
 
-    var size = playerSize();
+    playerEl.classList.toggle('embed-full', isFullscreen);
+    updatePlayerScale();
 
     player = new YT.Player('player', {
-      width: String(size.w),
-      height: String(size.h),
+      width: String(PLAYER_HD.w),
+      height: String(PLAYER_HD.h),
       videoId: video.id,
       host: 'https://www.youtube-nocookie.com',
       playerVars: {
