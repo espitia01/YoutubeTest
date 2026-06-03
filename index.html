@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=600, height=600, initial-scale=1.0, user-scalable=no">
+  <title>YouTube</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon-96.png" sizes="96x96">
+</head>
+<body>
+  <div id="app">
+
+    <!-- Browse -->
+    <section id="browse" class="screen">
+      <header class="header">
+        <span class="header-icon" aria-hidden="true">▶</span>
+        <h1>YouTube</h1>
+        <span class="header-meta" id="video-count"></span>
+      </header>
+
+      <div class="content" id="video-list" role="list"></div>
+
+      <nav class="nav-bar">
+        <button class="nav-item primary focusable" data-action="play-selected" tabindex="0">
+          ▶ Play Selected
+        </button>
+      </nav>
+    </section>
+
+    <!-- Player -->
+    <section id="player-screen" class="screen hidden">
+      <header class="header">
+        <button class="back-btn focusable" data-action="back" tabindex="0" aria-label="Back">←</button>
+        <h1 id="now-playing-title">Now Playing</h1>
+      </header>
+
+      <div class="player-wrap">
+        <div id="player"></div>
+      </div>
+
+      <nav class="nav-bar nav-bar-split">
+        <button class="nav-item focusable" data-action="toggle-play" tabindex="0" id="play-btn">
+          ⏸ Pause
+        </button>
+        <button class="nav-item focusable" data-action="next-video" tabindex="0">
+          ⏭ Next
+        </button>
+      </nav>
+    </section>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
