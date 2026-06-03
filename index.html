@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=600, height=600, initial-scale=1.0, user-scalable=no">
-  <title>YouTube</title>
+  <title>Watch</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon-96.png" sizes="96x96">
@@ -14,8 +14,10 @@
     <!-- Browse -->
     <section id="browse" class="screen">
       <header class="header">
-        <span class="header-icon" aria-hidden="true">▶</span>
-        <h1>YouTube</h1>
+        <div class="header-brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <h1>Watch</h1>
+        </div>
         <span class="header-meta" id="video-count"></span>
       </header>
 
@@ -23,7 +25,7 @@
 
       <nav class="nav-bar">
         <button class="nav-item primary focusable" data-action="play-selected" tabindex="0">
-          ▶ Play Selected
+          Play
         </button>
       </nav>
     </section>
@@ -41,18 +43,18 @@
 
       <nav class="nav-bar nav-bar-split player-chrome">
         <button class="nav-item focusable" data-action="toggle-play" tabindex="0" id="play-btn">
-          ⏸ Pause
+          Pause
         </button>
         <button class="nav-item focusable" data-action="next-video" tabindex="0" id="next-btn">
-          ⏭ Next
+          Next
         </button>
         <button class="nav-item focusable" data-action="toggle-fullscreen" tabindex="0" id="fullscreen-btn">
-          ⛶ Fullscreen
+          Full
         </button>
       </nav>
 
       <button class="fullscreen-exit focusable hidden" data-action="exit-fullscreen" tabindex="0" aria-label="Exit fullscreen">
-        ← Exit
+        Exit
       </button>
     </section>
 

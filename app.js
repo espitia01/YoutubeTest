@@ -21,7 +21,7 @@
   ];
 
   var STORAGE_KEY = 'youtube_last_index';
-  var PLAYER_VIEW = { w: 560, h: 315 };
+  var PLAYER_VIEW = { w: 552, h: 311 };
   var PLAYER_FULL_VIEW = { w: 600, h: 600 };
   // YouTube picks stream quality from iframe size; 1280px width unlocks up to 720p.
   var PLAYER_HD = { w: 1280, h: 720 };
@@ -82,7 +82,7 @@
 
   function renderVideoList() {
     videoListEl.innerHTML = '';
-    videoCountEl.textContent = VIDEOS.length + ' videos';
+    videoCountEl.textContent = String(VIDEOS.length).padStart(2, '0') + ' titles';
 
     VIDEOS.forEach(function (video, index) {
       var btn = document.createElement('button');
@@ -94,6 +94,7 @@
       btn.dataset.action = 'select-video';
 
       btn.innerHTML =
+        '<span class="video-index">' + String(index + 1).padStart(2, '0') + '</span>' +
         '<img class="video-thumb" src="' + thumbUrl(video.id) + '" alt="" loading="lazy">' +
         '<div class="video-info">' +
           '<div class="video-title">' + video.title + '</div>' +
@@ -179,7 +180,7 @@
     isFullscreen = on;
     playerScreen.classList.toggle('fullscreen', on);
     fullscreenExitBtn.classList.toggle('hidden', !on);
-    fullscreenBtn.textContent = on ? '⛶ Exit Fullscreen' : '⛶ Fullscreen';
+    fullscreenBtn.textContent = on ? 'Exit' : 'Full';
     playerEl.classList.toggle('embed-full', on);
     resizePlayer();
     if (on) {
@@ -234,12 +235,12 @@
 
   function onPlayerStateChange(event) {
     if (event.data === YT.PlayerState.PLAYING) {
-      playBtn.textContent = '⏸ Pause';
+      playBtn.textContent = 'Pause';
     } else if (
       event.data === YT.PlayerState.PAUSED ||
       event.data === YT.PlayerState.ENDED
     ) {
-      playBtn.textContent = '▶ Play';
+      playBtn.textContent = 'Play';
     }
   }
 
